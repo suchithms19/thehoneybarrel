@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Baxus Spirit Comparator",
+  "version": "1.0",
+  "description": "Compare spirit prices with Baxus",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+} 
