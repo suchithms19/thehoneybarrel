@@ -40,19 +40,19 @@ function App() {
       keys: [
         {
           name: 'name',
-          weight: 0.70  // 70% weight for name
+          weight: 0.70
         },
         {
           name: 'attributes.Size',
-          weight: 0.15  // 15% weight for size
+          weight: 0.15
         },
         {
           name: 'price',
-          weight: 0.10  // 10% weight for price
+          weight: 0.10
         },
         {
           name: 'spiritType',
-          weight: 0.05  // 5% weight for type
+          weight: 0.05
         }
       ],
       threshold: 0.4,
@@ -158,13 +158,13 @@ If any field cannot be found, use "unknown" as the value.`
   };
 
   return (
-    <div className="w-80 p-4 bg-white">
-      <h1 className="text-xl font-bold mb-4">Baxus Spirit Comparator</h1>
+    <div className="w-[400px] min-h-screen p-4 bg-[#f8f6f1]">
+      <h1 className="text-xl font-bold mb-4 text-gray-800">Baxus Spirit Comparator</h1>
       
       <button
         onClick={extractSpiritData}
         disabled={loading}
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+        className="w-full bg-[#1c6d72] hover:bg-[#165256] text-white font-bold py-2 px-4 rounded disabled:opacity-50 mb-6"
       >
         {loading ? 'Extracting...' : 'Compare with Baxus'}
       </button>
@@ -176,32 +176,51 @@ If any field cannot be found, use "unknown" as the value.`
       )}
 
       {spiritData && (
-        <div className="mt-4 p-4 bg-gray-50 rounded">
-          <h2 className="font-bold mb-2">Extracted Data:</h2>
+        <div className="mt-4 p-4 bg-white rounded shadow-sm">
+          <h2 className="font-bold mb-2 text-gray-800">Extracted Data:</h2>
           <p><span className="font-semibold">Name:</span> {spiritData.name}</p>
           <p><span className="font-semibold">Price:</span> {spiritData.price}</p>
           <p><span className="font-semibold">Type:</span> {spiritData.type}</p>
-          <p><span className="font-semibold">Cask Size:</span> {spiritData.size}</p>
+          <p><span className="font-semibold">Size:</span> {spiritData.size}</p>
         </div>
       )}
 
       {baxusMatches && baxusMatches.length > 0 && (
-        <div className="mt-4 p-4 bg-gray-50 rounded">
-          <h2 className="font-bold mb-2">BAXUS Matches:</h2>
+        <div className="mt-6 space-y-4">
+          <h2 className="font-bold text-gray-800">BAXUS Matches:</h2>
           {baxusMatches.map((match, index) => (
-            <div key={index} className="mb-4 p-2 border rounded">
-              <p><span className="font-semibold">Name:</span> {match.name}</p>
-              <p><span className="font-semibold">Price:</span> ${match.price}</p>
-              <p><span className="font-semibold">Type:</span> {match.spiritType}</p>
-              <p><span className="font-semibold">Size:</span> {match.attributes?.Size}</p>
-              <p className="text-sm text-gray-500">Match Score: {(1 - match.matchScore).toFixed(2)}</p>
+            <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="aspect-w-1 aspect-h-1 w-full">
+                <img 
+                  src={match.imageUrl} 
+                  alt={match.name}
+                  className="w-full h-[300px] object-contain bg-white p-4"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-medium text-gray-800 mb-2">{match.name}</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-3">${match.price}</p>
+                <div className="space-y-1 text-sm text-gray-600 mb-4">
+                  <p><span className="font-medium">Type:</span> {match.spiritType}</p>
+                  <p><span className="font-medium">Size:</span> {match.attributes?.Size}</p>
+                  <p className="text-xs text-gray-500">Match Score: {(1 - match.matchScore).toFixed(2)}</p>
+                </div>
+                <a 
+                  href={`https://baxus.co/asset/${match.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-[#1c6d72] hover:bg-[#165256] text-white text-center font-bold py-2 px-4 rounded"
+                >
+                  Buy Now
+                </a>
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {baxusMatches && baxusMatches.length === 0 && (
-        <div className="mt-4 p-4 bg-gray-50 rounded">
+        <div className="mt-4 p-4 bg-white rounded shadow-sm">
           <p className="text-gray-600">No matching listings found on BAXUS.</p>
         </div>
       )}
