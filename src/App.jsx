@@ -55,9 +55,13 @@ function App() {
         {
           name: 'spiritType',
           weight: 0.05
+        },
+        {
+          name: 'attributes.ABV',
+          weight: 0.1
         }
       ],
-      threshold: 0.5,
+      threshold: 0.4,
       includeScore: true,
       minMatchCharLength: 3,
       shouldSort: true
@@ -76,7 +80,7 @@ function App() {
         matchScore: result.score
       }))
       .sort((a, b) => a.matchScore - b.matchScore)
-      .slice(0, 5);
+      .slice(0, 3);
   };
 
   const calculateSavings = (scrapedPrice, baxusPrice) => {
@@ -138,12 +142,19 @@ function App() {
    - Brandy
    - Other spirit categories
 
+5. ABV: The alcohol by volume percentage. Look for:
+   - % ABV
+   - Alcohol percentage
+   - Proof (divide by 2 to get ABV)
+   - Numbers followed by % that appear to be alcohol content
+
 Return the data in this exact JSON format:
 {
   "name": "extracted name",
   "price": "extracted price",
   "size": "extracted size",
-  "type": "extracted type"
+  "type": "extracted type",
+  "abv": "extracted abv"
 }
 
 If any field cannot be found, use "unknown" as the value.`
@@ -182,7 +193,7 @@ If any field cannot be found, use "unknown" as the value.`
 
       {loading && (
         <div className="flex justify-center my-8">
-          <img src={loadingGif} alt="Loading..." className="w-full h-[300px]" />
+          <img src={loadingGif} alt="Loading..." className="w-[200px] h-[200px]" />
         </div>
       )}
 
@@ -199,6 +210,7 @@ If any field cannot be found, use "unknown" as the value.`
           <p><span className="font-semibold">Price:</span> {spiritData.price}</p>
           <p><span className="font-semibold">Type:</span> {spiritData.type}</p>
           <p><span className="font-semibold">Size:</span> {spiritData.size}</p>
+          <p><span className="font-semibold">ABV:</span> {spiritData.abv}</p>
         </div>
       )}
 
@@ -213,7 +225,7 @@ If any field cannot be found, use "unknown" as the value.`
                     <img 
                       src={match.imageUrl} 
                       alt={match.name}
-                      className="w-full h-[120px] object-contain bg-white"
+                      className="w-full h-[140px] object-contain bg-white"
                     />
                   </div>
                   <div className="w-2/3">
@@ -225,7 +237,7 @@ If any field cannot be found, use "unknown" as the value.`
                       <div className="flex items-baseline gap-2">
                         <p className="text-xl font-bold text-gray-900">${match.price}</p>
                         {savings > 0 && (
-                          <span className="text-md text-green-600">Save ${savings.toFixed(2)}</span>
+                          <span className="text-lg text-green-600">Save ${savings.toFixed(2)}</span>
                         )}
                       </div>
                       <div className="mt-3">
