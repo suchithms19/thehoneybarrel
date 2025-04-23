@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import FirecrawlApp from "@mendable/firecrawl-js";
 import Fuse from 'fuse.js';
+import logo from '/logo.svg';
+import loadingGif from '/loading.gif';
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -40,22 +42,22 @@ function App() {
       keys: [
         {
           name: 'name',
-          weight: 0.70
+          weight: 0.8
         },
         {
           name: 'attributes.Size',
-          weight: 0.15
+          weight: 0.1
         },
         {
           name: 'price',
-          weight: 0.10
+          weight: 0.05
         },
         {
           name: 'spiritType',
           weight: 0.05
         }
       ],
-      threshold: 0.4,
+      threshold: 0.5,
       includeScore: true,
       minMatchCharLength: 3,
       shouldSort: true
@@ -75,6 +77,13 @@ function App() {
       }))
       .sort((a, b) => a.matchScore - b.matchScore)
       .slice(0, 5);
+  };
+
+  const calculateSavings = (scrapedPrice, baxusPrice) => {
+    const scraped = parseFloat(scrapedPrice.replace(/[^0-9.]/g, ''));
+    const baxus = parseFloat(baxusPrice);
+    if (isNaN(scraped) || isNaN(baxus)) return null;
+    return scraped - baxus;
   };
 
   const extractSpiritData = async () => {
@@ -158,8 +167,10 @@ If any field cannot be found, use "unknown" as the value.`
   };
 
   return (
-    <div className="w-[400px] min-h-screen p-4 bg-[#f8f6f1]">
-      <h1 className="text-xl font-bold mb-4 text-gray-800">Baxus Spirit Comparator</h1>
+    <div className="w-[400px] min-h-screen p-6 bg-[#f8f6f1]">
+      <div className="flex justify-center mb-6 ">
+        <img src={logo} alt="Baxus Logo" className="h-4" />
+      </div>
       
       <button
         onClick={extractSpiritData}
@@ -169,13 +180,19 @@ If any field cannot be found, use "unknown" as the value.`
         {loading ? 'Extracting...' : 'Compare with Baxus'}
       </button>
 
+      {loading && (
+        <div className="flex justify-center my-8">
+          <img src={loadingGif} alt="Loading..." className="w-full h-[300px]" />
+        </div>
+      )}
+
       {error && (
         <div className="mt-4 p-2 bg-red-100 text-red-700 rounded">
           {error}
         </div>
       )}
 
-      {spiritData && (
+      {!loading && spiritData && (
         <div className="mt-4 p-4 bg-white rounded shadow-sm">
           <h2 className="font-bold mb-2 text-gray-800">Extracted Data:</h2>
           <p><span className="font-semibold">Name:</span> {spiritData.name}</p>
@@ -185,41 +202,52 @@ If any field cannot be found, use "unknown" as the value.`
         </div>
       )}
 
-      {baxusMatches && baxusMatches.length > 0 && (
+      {!loading && baxusMatches && baxusMatches.length > 0 && (
         <div className="mt-6 space-y-4">
-          <h2 className="font-bold text-gray-800">BAXUS Matches:</h2>
-          {baxusMatches.map((match, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="aspect-w-1 aspect-h-1 w-full">
-                <img 
-                  src={match.imageUrl} 
-                  alt={match.name}
-                  className="w-full h-[300px] object-contain bg-white p-4"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="font-medium text-gray-800 mb-2">{match.name}</h3>
-                <p className="text-2xl font-bold text-gray-900 mb-3">${match.price}</p>
-                <div className="space-y-1 text-sm text-gray-600 mb-4">
-                  <p><span className="font-medium">Type:</span> {match.spiritType}</p>
-                  <p><span className="font-medium">Size:</span> {match.attributes?.Size}</p>
-                  <p className="text-xs text-gray-500">Match Score: {(1 - match.matchScore).toFixed(2)}</p>
+          {baxusMatches.map((match, index) => {
+            const savings = calculateSavings(spiritData.price, match.price);
+            return (
+              <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden p-4">
+                <div className="flex items-start space-x-4">
+                  <div className="w-1/3">
+                    <img 
+                      src={match.imageUrl} 
+                      alt={match.name}
+                      className="w-full h-[120px] object-contain bg-white"
+                    />
+                  </div>
+                  <div className="w-2/3">
+                    <h3 className="font-['DM_Serif_Text'] text-lg text-gray-800">{match.name}</h3>
+                    <div className="text-[10px] text-gray-600 mb-1">
+                      {match.spiritType} | {match.attributes?.Size}{match.attributes?.ABV && ` | ${match.attributes?.ABV * 2} Proof`}
+                    </div>
+                    <div className="font-['DM_Sans']">
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-xl font-bold text-gray-900">${match.price}</p>
+                        {savings > 0 && (
+                          <span className="text-md text-green-600">Save ${savings.toFixed(2)}</span>
+                        )}
+                      </div>
+                      <div className="mt-3">
+                        <a 
+                          href={`https://baxus.co/asset/${match.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-full bg-[#1c6d72] hover:bg-[#165256] text-white text-center font-bold py-2 px-4 rounded text-sm"
+                        >
+                          Buy Now
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <a 
-                  href={`https://baxus.co/asset/${match.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-[#1c6d72] hover:bg-[#165256] text-white text-center font-bold py-2 px-4 rounded"
-                >
-                  Buy Now
-                </a>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {baxusMatches && baxusMatches.length === 0 && (
+      {!loading && baxusMatches && baxusMatches.length === 0 && (
         <div className="mt-4 p-4 bg-white rounded shadow-sm">
           <p className="text-gray-600">No matching listings found on BAXUS.</p>
         </div>
