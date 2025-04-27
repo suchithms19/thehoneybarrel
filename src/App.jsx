@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FirecrawlApp from "@mendable/firecrawl-js";
 import Fuse from 'fuse.js';
 import logo from '/logo.svg';
@@ -6,9 +6,31 @@ import loadingGif from '/loading.gif';
 
 function App() {
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Finding fine & rare spirits');
   const [spiritData, setSpiritData] = useState(null);
   const [error, setError] = useState(null);
   const [baxusMatches, setBaxusMatches] = useState(null);
+
+  const loadingMessages = [
+    'Loading exclusive bottles...',
+    'Finding rare spirits...',
+    'Gathering luxury collections...',
+    'Searching for limited-edition bottles...',
+    'Uncovering the finest distillations...'
+  ];
+  
+
+  useEffect(() => {
+    if (loading) {
+      let messageIndex = 0;
+      const interval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[messageIndex]);
+      }, 4000);
+
+      return () => clearInterval(interval);
+    }
+  }, [loading]);
 
   const normalizeBottleName = (name) => {
     if (!name) return '';
@@ -61,7 +83,7 @@ function App() {
           weight: 0.1
         }
       ],
-      threshold: 0.4,
+      threshold: 0.5,
       includeScore: true,
       minMatchCharLength: 3,
       shouldSort: true
@@ -80,7 +102,7 @@ function App() {
         matchScore: result.score
       }))
       .sort((a, b) => a.matchScore - b.matchScore)
-      .slice(0, 3);
+      .slice(0, 5);
   };
 
   const calculateSavings = (scrapedPrice, baxusPrice) => {
@@ -179,22 +201,34 @@ If any field cannot be found, use "unknown" as the value.`
 
   return (
     <div className="w-[400px] min-h-screen p-6 bg-[#f8f6f1]">
-      <div className="flex justify-center mb-6 ">
+      <div className="flex flex-col items-center mb-6">
         <img src={logo} alt="Baxus Logo" className="h-4" />
+        {!loading && !spiritData && (
+          <p className="font-['DM_Sans'] text-sm text-gray-600 text-center tracking-wide">
+            The only peer-to-peer marketplace for fine & rare spirits
+          </p>
+        )}
       </div>
       
-      <button
-        onClick={extractSpiritData}
-        disabled={loading}
-        className="w-full bg-[#1c6d72] hover:bg-[#165256] text-white font-bold py-2 px-4 rounded disabled:opacity-50 mb-6"
-      >
-        {loading ? 'Extracting...' : 'Compare with Baxus'}
-      </button>
-
       {loading && (
-        <div className="flex justify-center my-8">
-          <img src={loadingGif} alt="Loading..." className="w-[200px] h-[200px]" />
+        <div className="flex flex-col items-center my-8">
+          <img src={loadingGif} alt="Loading..." className="w-[200px] h-[200px] mb-4" />
+          <button
+            disabled
+            className="w-full bg-[#1c6d72] text-white font-bold py-2 px-4 rounded opacity-50"
+          >
+            {loadingMessage}
+          </button>
         </div>
+      )}
+
+      {!loading && !spiritData && (
+        <button
+          onClick={extractSpiritData}
+          className="w-full bg-[#1c6d72] hover:bg-[#165256] text-white font-bold py-1 px-4 rounded disabled:opacity-50 mb-4"
+        >
+          Find on Baxus
+        </button>
       )}
 
       {error && (
@@ -215,7 +249,7 @@ If any field cannot be found, use "unknown" as the value.`
       )}
 
       {!loading && baxusMatches && baxusMatches.length > 0 && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 space-y-4">
           {baxusMatches.map((match, index) => {
             const savings = calculateSavings(spiritData.price, match.price);
             return (
@@ -237,7 +271,7 @@ If any field cannot be found, use "unknown" as the value.`
                       <div className="flex items-baseline gap-2">
                         <p className="text-xl font-bold text-gray-900">${match.price}</p>
                         {savings > 0 && (
-                          <span className="text-lg text-green-600">Save ${savings.toFixed(2)}</span>
+                          <span className="text-md text-green-600">Save ${savings.toFixed(2)}</span>
                         )}
                       </div>
                       <div className="mt-3">
@@ -260,8 +294,17 @@ If any field cannot be found, use "unknown" as the value.`
       )}
 
       {!loading && baxusMatches && baxusMatches.length === 0 && (
-        <div className="mt-4 p-4 bg-white rounded shadow-sm">
-          <p className="text-gray-600">No matching listings found on BAXUS.</p>
+        <div className="mt-4 p-4 bg-white rounded shadow-sm text-center">
+          <p className="text-gray-800 font-['DM_Serif_Text'] text-lg mb-3">No matches found, no worries!</p>
+          <p className="text-gray-600 mb-4">Discover our curated collection of the world's fine and rare spirits.</p>
+          <a 
+            href="https://baxus.co"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full bg-[#1c6d72] hover:bg-[#165256] text-white text-center font-bold py-2 px-4 rounded text-sm"
+          >
+            Explore Baxus Collection
+          </a>
         </div>
       )}
     </div>
