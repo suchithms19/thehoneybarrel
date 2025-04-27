@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import FirecrawlApp from "@mendable/firecrawl-js";
 import Fuse from 'fuse.js';
-import logo from '/logo.svg';
-import loadingGif from '/loading.gif';
+import { extractionPrompt } from './utils/extractionPrompt';
+
+// Import components
+import Header from './components/Header';
+import LoadingSpinner from './components/LoadingSpinner';
+import ErrorMessage from './components/ErrorMessage';
+import SearchResults from './components/SearchResults';
+import NoResults from './components/NoResults';
 
 function App() {
   const [loading, setLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('Finding fine & rare spirits');
+  const [loadingMessage, setLoadingMessage] = useState('Finding fine & rare spirits...');
   const [spiritData, setSpiritData] = useState(null);
   const [error, setError] = useState(null);
   const [baxusMatches, setBaxusMatches] = useState(null);
@@ -26,7 +32,7 @@ function App() {
       const interval = setInterval(() => {
         messageIndex = (messageIndex + 1) % loadingMessages.length;
         setLoadingMessage(loadingMessages[messageIndex]);
-      }, 4000);
+      }, 5000);
 
       return () => clearInterval(interval);
     }
@@ -105,13 +111,6 @@ function App() {
       .slice(0, 5);
   };
 
-  const calculateSavings = (scrapedPrice, baxusPrice) => {
-    const scraped = parseFloat(scrapedPrice.replace(/[^0-9.]/g, ''));
-    const baxus = parseFloat(baxusPrice);
-    if (isNaN(scraped) || isNaN(baxus)) return null;
-    return scraped - baxus;
-  };
-
   const extractSpiritData = async () => {
     try {
       setLoading(true);
@@ -128,58 +127,7 @@ function App() {
 
       // Extract data using Firecrawl with detailed prompt
       const scrapeResult = await app.extract([tab.url], {
-        prompt: `Extract spirit information from this page. Look for:
-
-1. Name: The full name of the spirit/bottle. This could be in:
-   - Product title
-   - Heading (h1, h2)
-   - Product name field
-   - Meta title
-   - Any prominent text that appears to be the bottle name
-
-2. Price: The current price of the bottle. Look for:
-   - Price tags
-   - Currency symbols ($, €, £)
-   - Numbers that appear to be prices
-   - Sale prices
-   - Regular prices
-   - Any price-related text
-
-3. Size: The bottle size/volume. Look for:
-   - ml, cl, L measurements
-   - Volume indicators
-   - Size specifications
-   - Common sizes like 700ml, 750ml, 1L
-
-4. Type: The type of spirit. Look for:
-   - Whisky/Whiskey
-   - Bourbon
-   - Scotch
-   - Rum
-   - Gin
-   - Vodka
-   - Tequila
-   - Liqueur
-   - Cognac
-   - Brandy
-   - Other spirit categories
-
-5. ABV: The alcohol by volume percentage. Look for:
-   - % ABV
-   - Alcohol percentage
-   - Proof (divide by 2 to get ABV)
-   - Numbers followed by % that appear to be alcohol content
-
-Return the data in this exact JSON format:
-{
-  "name": "extracted name",
-  "price": "extracted price",
-  "size": "extracted size",
-  "type": "extracted type",
-  "abv": "extracted abv"
-}
-
-If any field cannot be found, use "unknown" as the value.`
+        prompt: extractionPrompt
       });
 
       if (!scrapeResult.success) {
@@ -201,26 +149,9 @@ If any field cannot be found, use "unknown" as the value.`
 
   return (
     <div className="w-[400px] min-h-screen p-6 bg-[#f8f6f1]">
-      <div className="flex flex-col items-center mb-6">
-        <img src={logo} alt="Baxus Logo" className="h-4" />
-        {!loading && !spiritData && (
-          <p className="font-['DM_Sans'] text-sm text-gray-600 text-center tracking-wide">
-            The only peer-to-peer marketplace for fine & rare spirits
-          </p>
-        )}
-      </div>
+      <Header showDescription={!loading && !spiritData} />
       
-      {loading && (
-        <div className="flex flex-col items-center my-8">
-          <img src={loadingGif} alt="Loading..." className="w-[200px] h-[200px] mb-4" />
-          <button
-            disabled
-            className="w-full bg-[#1c6d72] text-white font-bold py-2 px-4 rounded opacity-50"
-          >
-            {loadingMessage}
-          </button>
-        </div>
-      )}
+      {loading && <LoadingSpinner loadingMessage={loadingMessage} />}
 
       {!loading && !spiritData && (
         <button
@@ -231,82 +162,13 @@ If any field cannot be found, use "unknown" as the value.`
         </button>
       )}
 
-      {error && (
-        <div className="mt-4 p-2 bg-red-100 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-
-      {!loading && spiritData && (
-        <div className="mt-4 p-4 bg-white rounded shadow-sm">
-          <h2 className="font-bold mb-2 text-gray-800">Extracted Data:</h2>
-          <p><span className="font-semibold">Name:</span> {spiritData.name}</p>
-          <p><span className="font-semibold">Price:</span> {spiritData.price}</p>
-          <p><span className="font-semibold">Type:</span> {spiritData.type}</p>
-          <p><span className="font-semibold">Size:</span> {spiritData.size}</p>
-          <p><span className="font-semibold">ABV:</span> {spiritData.abv}</p>
-        </div>
-      )}
+      {error && <ErrorMessage message={error} />}
 
       {!loading && baxusMatches && baxusMatches.length > 0 && (
-        <div className="mt-4 space-y-4">
-          {baxusMatches.map((match, index) => {
-            const savings = calculateSavings(spiritData.price, match.price);
-            return (
-              <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden p-4">
-                <div className="flex items-start space-x-4">
-                  <div className="w-1/3">
-                    <img 
-                      src={match.imageUrl} 
-                      alt={match.name}
-                      className="w-full h-[140px] object-contain bg-white"
-                    />
-                  </div>
-                  <div className="w-2/3">
-                    <h3 className="font-['DM_Serif_Text'] text-lg text-gray-800">{match.name}</h3>
-                    <div className="text-[10px] text-gray-600 mb-1">
-                      {match.spiritType} | {match.attributes?.Size}{match.attributes?.ABV && ` | ${match.attributes?.ABV * 2} Proof`}
-                    </div>
-                    <div className="font-['DM_Sans']">
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-xl font-bold text-gray-900">${match.price}</p>
-                        {savings > 0 && (
-                          <span className="text-md text-green-600">Save ${savings.toFixed(2)}</span>
-                        )}
-                      </div>
-                      <div className="mt-3">
-                        <a 
-                          href={`https://baxus.co/asset/${match.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block w-full bg-[#1c6d72] hover:bg-[#165256] text-white text-center font-bold py-2 px-4 rounded text-sm"
-                        >
-                          Buy Now
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <SearchResults matches={baxusMatches} spiritData={spiritData} />
       )}
 
-      {!loading && baxusMatches && baxusMatches.length === 0 && (
-        <div className="mt-4 p-4 bg-white rounded shadow-sm text-center">
-          <p className="text-gray-800 font-['DM_Serif_Text'] text-lg mb-3">No matches found, no worries!</p>
-          <p className="text-gray-600 mb-4">Discover our curated collection of the world's fine and rare spirits.</p>
-          <a 
-            href="https://baxus.co"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full bg-[#1c6d72] hover:bg-[#165256] text-white text-center font-bold py-2 px-4 rounded text-sm"
-          >
-            Explore Baxus Collection
-          </a>
-        </div>
-      )}
+      {!loading && baxusMatches && baxusMatches.length === 0 && <NoResults />}
     </div>
   );
 }
