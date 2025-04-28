@@ -10,15 +10,22 @@ dotenv.config();
 // Initialize Express application
 const app = express();
 const port = process.env.PORT || 3001;
-const API_KEY = process.env.API_KEY ;
+const API_KEY = process.env.API_KEY;
+
+// Cache configuration
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes 
+let baxusListingsCache = {
+  data: null,
+  timestamp: null
+};
 
 // Configure rate limiter: maximum 100 requests per 15 minutes
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, 
   message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true, 
-  legacyHeaders: false, 
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // API Key authentication middleware
@@ -33,10 +40,10 @@ const authenticateApiKey = (req, res, next) => {
 };
 
 // Middleware
-app.use(cors()); 
-app.use(express.json()); 
+app.use(cors());
+app.use(express.json());
 app.use(compression()); // Enable compression
-app.use(limiter); 
+app.use(limiter);
 
 // Initialize Firecrawl with API key from environment variables
 const firecrawl = new FirecrawlApp({
@@ -44,19 +51,54 @@ const firecrawl = new FirecrawlApp({
 });
 
 /**
+ * Fetch fresh BAXUS listings from the API
+ * @returns {Promise<Array>} Array of BAXUS listings
+ */
+const fetchFreshBaxusListings = async () => {
+  const response = await fetch('https://services.baxus.co/api/search/listings?from=0&size=1500&listed=true');
+  if (!response.ok) {
+    throw new Error(`Failed to fetch BAXUS listings: HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return data.map(listing => listing._source);
+};
+
+/**
+ * Get BAXUS listings with caching
+ * @returns {Promise<Array>} Array of BAXUS listings
+ */
+const getCachedBaxusListings = async () => {
+  const now = Date.now();
+  
+  // Return cached data if it exists and hasn't expired
+  if (baxusListingsCache.data && baxusListingsCache.timestamp && 
+      (now - baxusListingsCache.timestamp) < CACHE_DURATION) {
+    console.log('Returning cached BAXUS listings');
+    return baxusListingsCache.data;
+  }
+
+  // Fetch fresh data if cache is expired or doesn't exist
+  console.log('Fetching fresh BAXUS listings');
+  const freshData = await fetchFreshBaxusListings();
+  
+  // Update cache
+  baxusListingsCache = {
+    data: freshData,
+    timestamp: now
+  };
+
+  return freshData;
+};
+
+/**
  * @route GET /api/baxus-listings
- * @desc Fetch BAXUS listings from their API
+ * @desc Fetch BAXUS listings from their API with caching
  * @access Private
  * @returns {Array} List of BAXUS listings
  */
 app.get('/api/baxus-listings', authenticateApiKey, async (_req, res) => {
   try {
-    const response = await fetch('https://services.baxus.co/api/search/listings?from=0&size=1500&listed=true');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch BAXUS listings: HTTP ${response.status}`);
-    }
-    const data = await response.json();
-    const listings = data.map(listing => listing._source);
+    const listings = await getCachedBaxusListings();
     res.json(listings);
   } catch (error) {
     console.error('Error fetching BAXUS listings:', error);
