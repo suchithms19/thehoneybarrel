@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import FirecrawlApp from "@mendable/firecrawl-js";
 import Fuse from 'fuse.js';
-import { extractionPrompt } from './utils/extractionPrompt';
 
 // Import components
 import Header from './components/Header';
@@ -10,12 +8,23 @@ import ErrorMessage from './components/ErrorMessage';
 import SearchResults from './components/SearchResults';
 import NoResults from './components/NoResults';
 
+// Backend API URL and key
+const API_URL = 'http://localhost:3001';
+const API_KEY = import.meta.env.VITE_FIRECRAWL_API_KEY;
+
+// Common headers for API requests
+const API_HEADERS = {
+  'Content-Type': 'application/json',
+  'X-API-Key': API_KEY
+};
+
 function App() {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Finding fine & rare spirits...');
   const [spiritData, setSpiritData] = useState(null);
   const [error, setError] = useState(null);
   const [baxusMatches, setBaxusMatches] = useState(null);
+  const [loadingStartTime, setLoadingStartTime] = useState(null);
 
   const loadingMessages = [
     'Loading exclusive bottles...',
@@ -28,13 +37,22 @@ function App() {
 
   useEffect(() => {
     if (loading) {
-      let messageIndex = 0;
-      const interval = setInterval(() => {
-        messageIndex = (messageIndex + 1) % loadingMessages.length;
-        setLoadingMessage(loadingMessages[messageIndex]);
-      }, 5000);
+      setLoadingStartTime(Date.now());
+      // Only start rotating messages after 2 seconds of loading
+      const initialDelay = setTimeout(() => {
+        let messageIndex = 0;
+        const interval = setInterval(() => {
+          messageIndex = (messageIndex + 1) % loadingMessages.length;
+          setLoadingMessage(loadingMessages[messageIndex]);
+        }, 5000);
 
-      return () => clearInterval(interval);
+        return () => {
+          clearInterval(interval);
+          clearTimeout(initialDelay);
+        };
+      }, 2000);
+
+      return () => clearTimeout(initialDelay);
     }
   }, [loading]);
 
@@ -51,16 +69,30 @@ function App() {
 
   const fetchBaxusListings = async () => {
     try {
-      const response = await fetch('https://services.baxus.co/api/search/listings?from=0&size=1500&listed=true');
+      const response = await fetch(`${API_URL}/api/baxus-listings`, {
+        headers: API_HEADERS
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch BAXUS listings');
+        throw new Error(`Failed to fetch BAXUS listings: HTTP ${response.status}`);
       }
-      const data = await response.json();
-      // Extract the _source field from each listing in the array
-      return data.map(listing => listing._source);
+      return await response.json();
     } catch (err) {
       throw new Error(`Error fetching BAXUS listings: ${err.message}`);
     }
+  };
+
+  const extractDataFromUrl = async (url) => {
+    const response = await fetch(`${API_URL}/api/extract`, {
+      method: 'POST',
+      headers: API_HEADERS,
+      body: JSON.stringify({ url })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to extract data: HTTP ${response.status}`);
+    }
+
+    return response.json();
   };
 
   const findMatchingListings = (scrapedData, baxusListings) => {
@@ -117,28 +149,19 @@ function App() {
       setError(null);
       setBaxusMatches(null);
       
-      // Get the current tab URL
+      /** @type {chrome.tabs.Tab} */
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
-      // Initialize Firecrawl with the API key from environment variable
-      const app = new FirecrawlApp({
-        apiKey: import.meta.env.VITE_FIRECRAWL_API_KEY
-      });
 
-      // Extract data using Firecrawl with detailed prompt
-      const scrapeResult = await app.extract([tab.url], {
-        prompt: extractionPrompt
-      });
+      // Make both API calls in parallel
+      const [scrapedData, baxusListings] = await Promise.all([
+        extractDataFromUrl(tab.url),
+        fetchBaxusListings()
+      ]);
 
-      if (!scrapeResult.success) {
-        throw new Error(`Failed to scrape: ${scrapeResult.error}`);
-      }
+      setSpiritData(scrapedData);
 
-      setSpiritData(scrapeResult.data);
-
-      // Fetch and match with BAXUS listings
-      const baxusListings = await fetchBaxusListings();
-      const matches = findMatchingListings(scrapeResult.data, baxusListings);
+      // Find matches once both API calls complete
+      const matches = findMatchingListings(scrapedData, baxusListings);
       setBaxusMatches(matches);
     } catch (err) {
       setError(err.message);
