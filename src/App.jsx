@@ -28,7 +28,6 @@ function App() {
 
   const loadingMessages = [
     'Loading exclusive bottles...',
-    'Finding rare spirits...',
     'Gathering luxury collections...',
     'Searching for limited-edition bottles...',
     'Uncovering the finest distillations...'

@@ -1,5 +1,10 @@
 const SearchResults = ({ matches, spiritData }) => {
   const calculateSavings = (scrapedPrice, baxusPrice) => {
+    // Only compare prices if scraped price has a dollar sign
+    if (!scrapedPrice || !scrapedPrice.includes('$')) {
+      return null;
+    }
+    
     const scraped = parseFloat(scrapedPrice.replace(/[^0-9.]/g, ''));
     const baxus = parseFloat(baxusPrice);
     if (isNaN(scraped) || isNaN(baxus)) return null;
