@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Baxus Spirit Comparator",
+  "name": "Honey Barrel",
   "version": "1.0",
-  "description": "Compare spirit prices with Baxus",
+  "description": "Honey Barrel Comparator is a Chrome Extension that helps users compare prices of spirits on various retail websites with listings available on the BAXUS marketplace.",
   "action": {
     "default_popup": "index.html"
   },

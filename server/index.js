@@ -73,12 +73,10 @@ const getCachedBaxusListings = async () => {
   // Return cached data if it exists and hasn't expired
   if (baxusListingsCache.data && baxusListingsCache.timestamp && 
       (now - baxusListingsCache.timestamp) < CACHE_DURATION) {
-    console.log('Returning cached BAXUS listings');
     return baxusListingsCache.data;
   }
 
   // Fetch fresh data if cache is expired or doesn't exist
-  console.log('Fetching fresh BAXUS listings');
   const freshData = await fetchFreshBaxusListings();
   
   // Update cache

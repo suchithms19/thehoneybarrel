@@ -19,6 +19,7 @@ const API_HEADERS = {
 };
 
 function App() {
+  // State management for app data and UI
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Finding fine & rare spirits...');
   const [spiritData, setSpiritData] = useState(null);
@@ -26,6 +27,7 @@ function App() {
   const [baxusMatches, setBaxusMatches] = useState(null);
   const [loadingStartTime, setLoadingStartTime] = useState(null);
 
+  // Loading messages to display during data fetch
   const loadingMessages = [
     'Loading exclusive bottles...',
     'Gathering luxury collections...',
@@ -34,6 +36,7 @@ function App() {
   ];
   
 
+  // Effect to handle rotating loading messages
   useEffect(() => {
     if (loading) {
       setLoadingStartTime(Date.now());
@@ -55,6 +58,7 @@ function App() {
     }
   }, [loading]);
 
+  // Helper function to standardize bottle names for better matching
   const normalizeBottleName = (name) => {
     if (!name) return '';
     return name
@@ -66,6 +70,7 @@ function App() {
       .trim();
   };
 
+  // API call to fetch BAXUS listings
   const fetchBaxusListings = async () => {
     try {
       const response = await fetch(`${API_URL}/api/baxus-listings`, {
@@ -80,6 +85,7 @@ function App() {
     }
   };
 
+  // API call to extract data from provided URL
   const extractDataFromUrl = async (url) => {
     const response = await fetch(`${API_URL}/api/extract`, {
       method: 'POST',
@@ -94,6 +100,7 @@ function App() {
     return response.json();
   };
 
+  // Core matching logic using fuzzy search
   const findMatchingListings = (scrapedData, baxusListings) => {
     if (!scrapedData || !scrapedData.name || !baxusListings) return [];
 
@@ -142,6 +149,7 @@ function App() {
       .slice(0, 5);
   };
 
+  // Main function to handle data extraction and matching
   const extractSpiritData = async () => {
     try {
       setLoading(true);
@@ -169,6 +177,7 @@ function App() {
     }
   };
 
+  // Main app UI render
   return (
     <div className="w-[400px] min-h-screen p-6 bg-[#f8f6f1]">
       <Header showDescription={!loading && !spiritData} />
@@ -191,6 +200,17 @@ function App() {
       )}
 
       {!loading && baxusMatches && baxusMatches.length === 0 && <NoResults />}
+
+      <div className="mt-1 text-center">
+        <a 
+          href="https://honeybarrel.netlify.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-gray-600 hover:text-[#165256] text-xs font-['DM_Sans'] underline"
+        >
+          Privacy Policy
+        </a>
+      </div>
     </div>
   );
 }
