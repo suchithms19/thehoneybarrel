@@ -65,7 +65,7 @@ function App() {
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')   // remove punctuation
       .replace(/\b(the|a|an)\b/g, '') // remove stopwords
-      .replace(/\btwelve\b/g, '12')
+      .replace(/\btwelve\b/g, '12')   //Need this for matching some bottles
       .replace(/\s+/g, ' ')          // normalize whitespace
       .trim();
   };
