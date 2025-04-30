@@ -10,7 +10,7 @@ import NoResults from './components/NoResults';
 
 // Backend API URL and key
 const API_URL = 'http://localhost:3001';
-const API_KEY = import.meta.env.VITE_FIRECRAWL_API_KEY;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 // Common headers for API requests
 const API_HEADERS = {

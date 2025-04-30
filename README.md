@@ -90,6 +90,9 @@ The backend server is built with Express.js and provides two main endpoints for 
 3. Create a `.env` file in the server directory:
    ```env
    PORT=3001
+   # Replace with your own secure API key (32+ characters)
+   # Example:
+   # API_KEY=ef9fda3b87c6b7b9e13fc124e5b5c9d1a0b9b55c417445b1a0599a9ac23b5eb7
    API_KEY=your_api_key_here
    FIRECRAWL_API_KEY=your_firecrawl_api_key
    ```
@@ -128,6 +131,35 @@ The backend server is built with Express.js and provides two main endpoints for 
    - Malformed requests
    - Failed extractions
    - Network errors
+
+### Frontend Setup
+
+1. Navigate to the root directory:
+   ```bash
+   cd ..  # If you're in the server directory
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file in the root directory:
+   ```env
+   VITE_API_KEY=your_security_api_key_here
+   #Example
+   # VITE_API_KEY=ef9fda3b87c6b7b9e13fc124e5b5c9d1a0b9b55c417445b1a0599a9ac23b5eb7
+   ```
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   
+   Or build for production:
+   ```bash
+   npm run build
+   ```
 
 ### Running the Full Stack
 
