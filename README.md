@@ -1,4 +1,4 @@
-# BAXUS Spirit Comparator
+# Honey Barrel Comparator
 
 Honey Barrel Comparator is a Chrome Extension that helps users compare prices of spirits on various retail websites with listings available on the BAXUS marketplace.
 
@@ -36,7 +36,7 @@ The application uses a sophisticated matching algorithm powered by Fuse.js with 
    - Includes match scoring for result ranking
    - Returns top 5 matches sorted by match score
 
-### Frontend Performance Features
+## Frontend Performance Features
 
 1. **Parallel API Calls**:
    ```javascript
