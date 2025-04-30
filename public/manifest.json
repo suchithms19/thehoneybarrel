@@ -3,8 +3,18 @@
   "name": "Honey Barrel",
   "version": "1.0",
   "description": "Honey Barrel Comparator is a Chrome Extension that helps users compare prices of spirits on various retail websites with listings available on the BAXUS marketplace.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "permissions": [
     "activeTab"

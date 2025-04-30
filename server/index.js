@@ -55,7 +55,7 @@ const firecrawl = new FirecrawlApp({
  * @returns {Promise<Array>} Array of BAXUS listings
  */
 const fetchFreshBaxusListings = async () => {
-  const response = await fetch('https://services.baxus.co/api/search/listings?from=0&size=1500&listed=true');
+  const response = await fetch('https://services.baxus.co/api/search/listings?from=0&size=2500&listed=true');
   if (!response.ok) {
     throw new Error(`Failed to fetch BAXUS listings: HTTP ${response.status}`);
   }

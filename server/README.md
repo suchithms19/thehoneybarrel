@@ -28,7 +28,10 @@ This is the backend server for the Honey Barrel chrome extension. Follow these s
    PORT=3001
 
    # API Authentication
-   API_KEY=ef9fda3b87c6b7b9e13fc124e5b5c9d1a0b9b55c417445b1a0599a9ac23b5eb7
+   # Replace with your own secure API key (32+ characters)
+   # Examples:
+   # API_KEY=ef9fda3b87c6b7b9e13fc124e5b5c9d1a0b9b55c417445b1a0599a9ac23b5eb7
+   API_KEY=your_secure_api_key_here
 
    # Firecrawl Configuration
    FIRECRAWL_API_KEY=your_firecrawl_api_key_here
@@ -68,3 +71,4 @@ This will start the server in production mode.
 - Make sure to never commit your `.env` file
 - The server runs on port 3001 by default, but this can be configured through the PORT environment variable
 - Rate limiting is enabled to protect the API from abuse
+
